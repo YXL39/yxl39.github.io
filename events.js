@@ -843,6 +843,146 @@
           }catch(e){ console.error('poaching_offer run error', e); return null; }
         }
       });
+        // 在events.js的registerDefaultEvents函数中添加以下事件注册
+
+        // 语言不通
+        this.register({
+            id: 'overseas_language_barrier',
+            name: '语言障碍',
+            description: '出境集训时因语言不通导致学习效率下降',
+            check: c => {
+                // 检查是否有学生正在进行出境集训（通过最近活动记录判断）
+                const lastActivity = c.game.activityLog?.[c.game.activityLog.length - 1];
+                if (!lastActivity || !lastActivity.includes('出境集训')) return false;
+
+                // 非英语国家概率更高
+                const nonEnglishCountries = ['日本', '韩国', '德国', '法国', '俄罗斯'];
+                const targetCountry = lastActivity.match(/出境集训：(.+?) /)?.[1];
+                const baseProb = nonEnglishCountries.includes(targetCountry) ? 0.3 : 0.1;
+
+                return getRandom() < baseProb;
+            },
+            run: c => {
+                const affectedStudents = c.game.students.filter(s => s.active);
+                affectedStudents.forEach(s => {
+                    // 降低知识获取效率
+                    s.knowledge_modifier = (s.knowledge_modifier || 1) * 0.7;
+                    // 增加压力
+                    s.pressure = Math.min(100, (s.pressure || 0) + 10);
+                    s.triggerTalents?.('pressure_change', { source: 'language_barrier', amount: 10 });
+                });
+
+                const msg = '语言不通导致学习效率下降，学生压力增加';
+                c.log && c.log(`[出境集训] ${msg}`);
+                window.pushEvent && window.pushEvent({
+                    name: '语言障碍',
+                    description: msg,
+                    week: c.game.week
+                });
+                return null;
+            }
+        });
+
+        // 文化差异适应
+        this.register({
+            id: 'overseas_culture_shock',
+            name: '文化冲击',
+            description: '学生因文化差异出现适应问题',
+            check: c => {
+                const lastActivity = c.game.activityLog?.[c.game.activityLog.length - 1];
+                if (!lastActivity || !lastActivity.includes('出境集训')) return false;
+
+                // 距离越远的国家概率越高
+                const farCountries = ['美国', '英国', '澳大利亚', '巴西'];
+                const targetCountry = lastActivity.match(/出境集训：(.+?) /)?.[1];
+                const prob = farCountries.includes(targetCountry) ? 0.25 : 0.15;
+
+                return getRandom() < prob;
+            },
+            run: c => {
+                const affected = c.game.students.filter(s => s.active && getRandom() < 0.5);
+                if (affected.length === 0) return null;
+
+                affected.forEach(s => {
+                    s.comfort = Math.max(0, (s.comfort || 0) - 15);
+                    s.mental = Math.max(0, (s.mental || 0) - 5);
+                });
+
+                const msg = `${affected.map(s => s.name).join('、')} 出现文化适应问题，舒适度下降`;
+                c.log && c.log(`[出境集训] ${msg}`);
+                window.pushEvent && window.pushEvent({
+                    name: '文化冲击',
+                    description: msg,
+                    week: c.game.week
+                });
+                return null;
+            }
+        });
+
+        // 当地学术交流
+        this.register({
+            id: 'overseas_academic_exchange',
+            name: '学术交流',
+            description: '偶遇当地学生进行学术交流，能力提升',
+            check: c => {
+                const lastActivity = c.game.activityLog?.[c.game.activityLog.length - 1];
+                if (!lastActivity || !lastActivity.includes('出境集训')) return false;
+                return getRandom() < 0.2;
+            },
+            run: c => {
+                const students = c.game.students.filter(s => s.active);
+                students.forEach(s => {
+                    const gain = c.utils.uniformInt(3, 8);
+                    s.thinking = (s.thinking || 0) + gain;
+                    s.coding = (s.coding || 0) + gain;
+                });
+
+                const msg = '与当地学生进行学术交流，思维和代码能力小幅提升';
+                c.log && c.log(`[出境集训] ${msg}`);
+                window.pushEvent && window.pushEvent({
+                    name: '学术交流',
+                    description: msg,
+                    week: c.game.week
+                });
+                return null;
+            }
+        });
+        // 在events.js的registerDefaultEvents函数中添加事件注册
+        this.register({
+            id: 'thailand_female_team_path',
+            name: '女队道路',
+            description: '在泰国集训期间受到启发，走上女队发展道路，所有比赛代码难度降低50%',
+            check: c => {
+                // 检查是否在泰国进行出境集训
+                const lastActivity = c.game.activityLog?.[c.game.activityLog.length - 1];
+                if (!lastActivity || !lastActivity.includes('出境集训')) return false;
+
+                const targetCountry = lastActivity.match(/出境集训：(.+?) /)?.[1];
+                if (targetCountry !== '泰国') return false;
+
+                // 触发概率：20%
+                return getRandom() < 0.2;
+            },
+            run: c => {
+                // 随机选择1名活跃学生触发（或所有学生，根据设计需求调整）
+                const eligibleStudents = c.game.students.filter(s => s.active);
+                if (eligibleStudents.length === 0) return null;
+
+                const targetStudent = eligibleStudents[Math.floor(getRandom() * eligibleStudents.length)];
+
+                // 标记学生状态（用于后续比赛难度计算）
+                targetStudent.femaleTeamPath = true;
+
+                const msg = `${targetStudent.name}在泰国集训期间受到启发，走上女队发展道路，所有比赛代码难度降低50%`;
+                c.log && c.log(`[出境集训] ${msg}`);
+                window.pushEvent && window.pushEvent({
+                    name: '女队道路',
+                    description: msg,
+                    week: c.game.week
+                });
+                return null;
+            }
+        });
 
       // 天赋获取事件
       this.register({
