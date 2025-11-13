@@ -2267,6 +2267,8 @@ function renderExtraTrainButton() {
 // 在主渲染流程中添加加训按钮
 // 监听 renderAll 执行后调用（若 renderAll 内部有钩子可直接插入，此处用全局监听）
 // 替换原 initExtraTrainButton 函数，确保绑定成功
+// 修改加训按钮点击事件处理逻辑，添加确认步骤
+// 修改加训按钮点击事件处理逻辑，在确认框中展示学生压力值
 function initExtraTrainButton() {
     const observer = new MutationObserver((mutations) => {
         const extraTrainBtn = document.getElementById('action-extra-train');
@@ -2280,17 +2282,62 @@ function initExtraTrainButton() {
                         throw new Error('游戏实例未初始化');
                     }
 
-                    const task = getTrainingTask();
-                    if (!task) {
-                        window.log('没有可用的加训任务');
-                        return;
+                    // 获取当前活跃学生列表及压力值
+                    const activeStudents = window.game.students.filter(s => s && s.active !== false);
+
+                    // 生成学生压力展示HTML
+                    let studentsPressureHtml = '<div class="students-pressure" style="margin:12px 0;max-height:200px;overflow:auto;padding:8px;border:1px solid #eee;border-radius:4px;">';
+                    if (activeStudents.length === 0) {
+                        studentsPressureHtml += '<p>当前没有活跃学生</p>';
+                    } else {
+                        studentsPressureHtml += '<p style="margin:0 0 8px;font-weight:bold;">当前学生压力值：</p>';
+                        activeStudents.forEach(s => {
+                            const pressure = Number(s.pressure || 0);
+                            // 压力等级样式（参考render.js中的划分）
+                            let pressureClass = pressure < 35 ? 'pressure-low' : pressure < 65 ? 'pressure-mid' : 'pressure-high';
+                            let pressureLevel = pressure < 35 ? '低' : pressure < 65 ? '中' : '高';
+
+                            studentsPressureHtml += `
+                                <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #f0f0f0;">
+                                    <span>${s.name}</span>
+                                    <span class="${pressureClass}" style="font-weight:bold;">
+                                        ${pressure.toFixed(1)}（${pressureLevel}）
+                                    </span>
+                                </div>
+                            `;
+                        });
                     }
+                    studentsPressureHtml += '</div>';
 
-                    // 执行加训并强制退队压力超100的学生
-                    executeExtraTraining(task);
+                    // 显示加训确认模态框（包含学生压力值）
+                    showModal(`
+                        <div class="modal-content">
+                            <h3>确认加训</h3>
+                            <p>加训将无行动值消耗，提升训练效果，但会使学生压力增加50%。</p>
+                            <p class="warning" style="color:#e53e3e;">警告：压力超过100的学生将直接退队！</p>
+                            
+                            ${studentsPressureHtml} <!-- 插入学生压力展示 -->
+                            
+                            <div class="modal-actions" style="margin-top:16px; display:flex; gap:8px; justify-content:flex-end;">
+                                <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+                                <button class="btn" id="confirm-extra-train">确认加训</button>
+                            </div>
+                        </div>
+                    `);
 
-                    window.renderAll();
-                    console.log('[加训按钮] 操作完成，已调用 renderAll');
+                    // 绑定确认按钮事件（保持原有逻辑）
+                    document.getElementById('confirm-extra-train').addEventListener('click', () => {
+                        closeModal();
+                        const task = getTrainingTask();
+                        if (!task) {
+                            window.log('没有可用的加训任务');
+                            return;
+                        }
+                        executeExtraTraining(task);
+                        window.renderAll();
+                        console.log('[加训按钮] 操作完成，已调用 renderAll');
+                    }, { once: true });
+
                 } catch (e) {
                     console.error('[加训按钮] 点击处理失败:', e);
                     window.log(`加训失败: ${e.message}`);
@@ -2308,6 +2355,7 @@ function initExtraTrainButton() {
         console.warn('[加训按钮] 未找到按钮容器，无法监听动态生成');
     }
 }
+
 
 // 补充：获取加训任务（参考训练功能的选题逻辑）
 // 正确逻辑：覆盖所有知识类型
