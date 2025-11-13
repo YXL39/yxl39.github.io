@@ -470,13 +470,37 @@ function renderAll(){
     let talentsHtml = '';
     if(s.talents && s.talents.size > 0){
       const talentArray = Array.from(s.talents);
-      talentsHtml = talentArray.map(talentName => {
-        const talentInfo = window.TalentManager ? window.TalentManager.getTalentInfo(talentName) : { name: talentName, description: '暂无描述', color: '#2b6cb0' };
-        return `<span class="talent-tag" data-talent="${talentName}" style="background-color: ${talentInfo.color}20; color: ${talentInfo.color}; border-color: ${talentInfo.color}40;">
-          ${talentName}
-          <span class="talent-tooltip">${talentInfo.description}</span>
-        </span>`;
-      }).join('');
+        talentsHtml = talentArray.map(talentName => {
+            const talentInfo = window.TalentManager ? window.TalentManager.getTalentInfo(talentName) : { name: talentName, description: '暂无描述', color: '#2b6cb0' };
+
+            // 新增：针对“珂朵莉”天赋的渐变色处理
+            let style = '';
+            if (talentName === '珂朵莉') {
+                // 红蓝渐变背景（透明效果，与现有标签的透明度保持一致）
+                // 边框使用渐变两侧的颜色，带透明度（后缀 40 对应原样式的 alpha 值）
+                style = `background: linear-gradient(90deg, #ff000020, #0000ff20); 
+             color: #c0392b; 
+             border-color: #ff000040 #0000ff40 #0000ff40 #ff000040;`;
+            } else if (talentName === '嬲选手') {
+                // 彩虹渐变背景（带透明度，与现有标签风格一致）
+                // 边框使用渐变两端颜色，增强层次感
+                style = `background: linear-gradient(90deg, 
+                     #ff000020, #ffa50020, #ffff0020, 
+                     #00ff0020, #0000ff20, #4b008220, #ee82ee20); 
+             color: #d946ef; /* 紫色文字与渐变呼应 */
+             border-color: #ff000040 #ee82ee40 #ee82ee40 #ff000040;`;
+            } else {
+                // 其他天赋保持原有样式逻辑
+                style = `background-color: ${talentInfo.color}20; 
+             color: ${talentInfo.color}; 
+             border-color: ${talentInfo.color}40;`;
+            }
+
+            return `<span class="talent-tag" data-talent="${talentName}" style="${style}">
+    ${talentName}
+    <span class="talent-tooltip">${talentInfo.description}</span>
+  </span>`;
+        }).join('');
     }
     
     out += `<div class="student-box">
