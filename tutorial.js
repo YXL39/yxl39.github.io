@@ -58,7 +58,7 @@ const TUTORIAL_STEPS = [
     id: 'actions',
     target: '.action-cards',
     title: '本周行动',
-    content: '每周选择一个行动：<br>• <strong>训练</strong>：提升能力和知识<br>• <strong>娱乐</strong>：缓解压力<br>• <strong>模拟赛</strong>：检验成果<br>• <strong>集训</strong>：快速提升',
+      content: '每周选择一个行动：<br>• <strong>训练</strong>：提升能力和知识<br>• <strong>加训</strong>：在一周以内进行随机加训，学生压力增加<br>• <strong>注意</strong>：你不能再第一周加训<br>• <strong>娱乐</strong>：缓解压力<br>• <strong>模拟赛</strong>：检验成果<br>• <strong>集训</strong>：快速提升<br>• <strong>出境集训</strong>：激发隐藏天赋、触发不确定性<br>• <strong>打工</strong>：压榨学生给你赚钱',
     position: 'left',
     highlight: true
   },
@@ -133,7 +133,7 @@ class TutorialSystem {
   }
 
   start() {
-    // 检查是否已完成过教程
+     检查是否已完成过教程
     if (localStorage.getItem('tutorial_completed') === 'true') {
       return;
     }

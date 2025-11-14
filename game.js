@@ -791,6 +791,7 @@ function outingTrainingWithSelection(difficulty_choice, province_choice, selecte
   game.weeks_since_entertainment += 1;
   log("外出集训完成（1周）。");
 
+    safeWeeklyUpdate(1);
   const __after = __createSnapshot?.();
   if(__before && __after) __summarizeSnapshot(__before, __after, `外出集训：${target.name} 难度${difficulty_choice}`);
 }
@@ -926,7 +927,7 @@ function overseasTrainingWithSelection(difficulty_choice, country_choice, select
         if (inspireTalents && inspireTalents.length > 0) {
             for (const talentName of inspireTalents) {
                 // 隐藏天赋的激发概率略高（35%）
-                const probability = HIDDEN_TALENTS.includes(talentName) ? 0.35 : 0.3;
+                const probability = HIDDEN_TALENTS.includes(talentName) ? 0.25 : 0.3;
                 if (Math.random() < probability) {
                     if (!s.talents.has(talentName)) {
                         s.talents.add(talentName);
@@ -958,29 +959,6 @@ function overseasTrainingWithSelection(difficulty_choice, country_choice, select
     const __after = __createSnapshot?.();
     if (__before && __after) __summarizeSnapshot(__before, __after, `出境集训：${target.name} 难度${difficulty_choice}`);
     // 最简单的事件触发 - 直接根据概率触发
-    if (Math.random() < 1.0) {
-        const eventTypes = ['语言障碍', '文化冲击', '学术交流'];
-        const selectedEvent = eventTypes[Math.floor(Math.random() * eventTypes.length)];
-
-        let description = '';
-        switch (selectedEvent) {
-            case '语言障碍':
-                description = `在${target.name}集训时语言不通导致学习效率下降`;
-                break;
-            case '文化冲击':
-                description = `学生因文化差异出现适应问题，舒适度下降`;
-                break;
-            case '学术交流':
-                description = `与当地学生进行学术交流，能力有所提升`;
-                break;
-        }
-
-        pushEvent({
-            name: selectedEvent,
-            description: description,
-            week: game.week
-        });
-    }
 
     // 泰国特殊事件
     if (target.name === '泰国' && Math.random() < 0.5) {
@@ -1412,7 +1390,8 @@ function checkAllQuitAndTriggerBadEnding(){
     if(game && game.allQuitTriggered) return;
   const active_count = Array.isArray(game.students) ? game.students.filter(s => s && s.active !== false).length : 0;
     if(active_count === 0){
-      triggerBadEnding('所有学生已退队，项目失败（坏结局）');
+        triggerBadEnding('所有学生已退队，项目失败（坏结局）');
+        safeWeeklyUpdate(1);
     }
   }catch(e){ console.error('checkAllQuitAndTriggerBadEnding error', e); }
 }

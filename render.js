@@ -1994,7 +1994,6 @@ function outingTrainingUI() {
       
       closeModal();
       outingTrainingWithSelection(d, p, selectedNames, selectedTalents);
-      safeWeeklyUpdate(1);
       renderAll();
     };
 }
@@ -2014,7 +2013,7 @@ function overseasTrainingUI() {
           <span class="collapse-arrow" style="font-size:12px;transition:transform 0.2s">▼</span>
         </h4>
         <div class="collapsible-content" style="margin-top:8px">
-          <div class="small muted" style="margin-bottom:8px">每选择一个激发天赋消耗 ¥20,000，参加集训的学生有 30% 概率获得该天赋（隐藏天赋概率略高）</div>
+          <div class="small muted" style="margin-bottom:8px">每选择一个激发天赋消耗 ¥20,000，参加集训的学生有 30% 概率获得该天赋（隐藏天赋概率略底）</div>
           <div id="overseas-talent-grid" class="talent-grid" style="max-height:200px;overflow:auto"></div>
         </div>
       </div>
@@ -2048,7 +2047,6 @@ function overseasTrainingUI() {
       // 获取所有天赋，包括隐藏天赋
       const allTalents = [
         ...(window.TalentManager.getRegistered() || []),
-        '嬲选手', '珂朵莉' // 添加隐藏天赋
       ];
       
       // 去重处理
@@ -2395,7 +2393,7 @@ function executeExtraTraining(task) {
         let basePressure = intensity === 1 ? 15 : intensity === 2 ? 25 : 40; // 高难度基础压力
         const difficultyPressure = Math.max(0, (task.difficulty - studentAbility) * 0.2); // 难度附加压力
         basePressure += difficultyPressure;
-        basePressure *= 1.8; // 加训额外增幅（确保压力易超100）
+        basePressure *= 1.2; // 加训额外增幅（确保压力易超100）
 
         // 应用设施和环境修正（参考game.js）
         const canteenReduction = window.game.facilities.getCanteenPressureReduction();
@@ -2469,6 +2467,7 @@ function executeExtraTraining(task) {
                 week: window.game.week,
                 isWarning: true
             });
+
             window.checkAllQuitAndTriggerBadEnding();
             // 不调用 checkAllQuitAndTriggerBadEnding，延迟结局触发
         } else {
@@ -2483,5 +2482,338 @@ function executeExtraTraining(task) {
         window.log('加训完成，所有学生压力均未超过100');
     }
 }
-// 在页面加载后初始化（确保DOM就绪）
+// 在 render.js 中添加以下函数
+
+/**
+ * 显示打工学生选择界面
+ */
+function showPartTimeJobUI() {
+    const activeStudents = game.students.filter(s => s && s.active);
+
+    let studentsHtml = '';
+    activeStudents.forEach(s => {
+        // 计算该学生的预期收益（基于思维、代码和心理素质）
+        const thinking = Number(s.thinking || 0);
+        const coding = Number(s.coding || 0);
+        const mental = Number(s.mental || 50); // 心理素质默认50
+        const expectedEarnings = calculateStudentEarnings(thinking, coding, mental);
+
+        const qualificationInfo = getStudentQualificationStatus(s);
+
+        let talentsHtml = '';
+        if (s.talents && s.talents.size > 0) {
+            const talentArray = Array.from(s.talents);
+            talentsHtml = talentArray.map(talentName => {
+                const talentInfo = window.TalentManager ? window.TalentManager.getTalentInfo(talentName) : { name: talentName, description: '暂无描述', color: '#2b6cb0' };
+                return `<span class="talent-tag" data-talent="${talentName}" style="background-color: ${talentInfo.color}20; color: ${talentInfo.color}; border-color: ${talentInfo.color}40;">
+                ${talentName}
+                <span class="talent-tooltip">${talentInfo.description}</span>
+              </span>`;
+            }).join('');
+        }
+
+        studentsHtml += `
+        <div class="student-card" data-name="${s.name}" style="padding:8px;margin:4px;border:1px solid #ddd;border-radius:6px;cursor:pointer;opacity:1.0">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <div>
+                    <input type="checkbox" class="student-checkbox" data-name="${s.name}" checked style="margin-right:8px">
+                    <strong>${s.name}</strong>
+                    ${qualificationInfo.html}
+                </div>
+                <div class="small" style="color:#2d3748;font-weight:600">
+                    预期收益: ¥${expectedEarnings}
+                </div>
+            </div>
+            
+            <div style="color:#666;margin-top:4px">
+                <div style="display:flex;gap:12px;font-size:12px">
+                    <span>思维: ${Math.floor(thinking)}</span>
+                    <span>代码: ${Math.floor(coding)}</span>
+                    <span>心理: ${Math.floor(mental)}</span>
+                </div>
+                <div class="knowledge-badges" style="margin-top:4px">
+                    <span class="kb ability" title="思维: ${Math.floor(thinking)}" data-grade="${getLetterGradeAbility(Math.floor(thinking))}">思维${getLetterGradeAbility(Math.floor(thinking))}</span>
+                    <span class="kb ability" title="代码: ${Math.floor(coding)}" data-grade="${getLetterGradeAbility(Math.floor(coding))}">代码${getLetterGradeAbility(Math.floor(coding))}</span>
+                </div>
+            </div>
+            
+            ${talentsHtml ? `<div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+                <span style="font-size:12px;color:#718096;font-weight:600;">天赋</span>
+                <div class="student-talents">${talentsHtml}</div>
+            </div>` : ''}
+        </div>`;
+    });
+
+    showModal(`<h3>选择打工学生</h3>
+        <div class="small muted" style="margin-bottom:10px">
+            选择要去打工的学生。收益与学生的思维、代码能力和心理素质相关。
+        </div>
+        
+        <div style="margin-bottom:12px">
+            <button class="btn btn-small" id="toggle-select-btn">取消全选</button>
+        </div>
+        
+        <div id="part-time-student-grid" style="max-height:300px;overflow:auto;border:1px solid #eee;padding:6px;margin-bottom:12px">
+            ${studentsHtml}
+        </div>
+        
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:8px;background:#f7fafc;border-radius:4px">
+            <div>
+                <strong>预计总收益: <span id="total-earnings-preview">¥0</span></strong>
+            </div>
+            <div class="small muted">
+                选中学生: <span id="selected-count">${activeStudents.length}</span> / ${activeStudents.length}
+            </div>
+        </div>
+        
+        <div class="small muted" style="margin-bottom:12px">
+            <strong>收益公式:</strong> 打工收益和代码能力、思维能力挂钩
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+            <button class="btn" id="confirm-part-time">开始打工</button>
+        </div>`);
+
+    // 初始化更新预览（默认全选状态）
+    updatePartTimeJobPreview();
+
+    // 绑定切换全选按钮事件
+    const toggleBtn = document.getElementById('toggle-select-btn');
+    toggleBtn.onclick = () => {
+        const allChecked = Array.from(document.querySelectorAll('.student-checkbox')).every(cb => cb.checked);
+
+        if (allChecked) {
+            // 当前是全选状态，点击后取消全选
+            document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.querySelectorAll('.student-card').forEach(card => {
+                card.style.opacity = '0.45';
+            });
+            toggleBtn.textContent = '全选';
+        } else {
+            // 当前不是全选状态，点击后全选
+            document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            document.querySelectorAll('.student-card').forEach(card => {
+                card.style.opacity = '1.0';
+            });
+            toggleBtn.textContent = '取消全选';
+        }
+
+        updatePartTimeJobPreview();
+    };
+
+    // 绑定学生选择事件
+    const studentCards = document.querySelectorAll('#part-time-student-grid .student-card');
+    studentCards.forEach(card => {
+        const checkbox = card.querySelector('.student-checkbox');
+        card.onclick = (e) => {
+            if (e.target !== checkbox) {
+                checkbox.checked = !checkbox.checked;
+            }
+            card.style.opacity = checkbox.checked ? '1.0' : '0.45';
+            updateToggleButtonState();
+            updatePartTimeJobPreview();
+        };
+
+        checkbox.onclick = (e) => {
+            e.stopPropagation();
+            card.style.opacity = checkbox.checked ? '1.0' : '0.45';
+            updateToggleButtonState();
+            updatePartTimeJobPreview();
+        };
+    });
+
+    // 绑定确认按钮事件
+    document.getElementById('confirm-part-time').onclick = () => {
+        const selectedStudents = Array.from(document.querySelectorAll('.student-checkbox:checked'))
+            .map(checkbox => checkbox.dataset.name);
+
+        if (selectedStudents.length === 0) {
+            alert('请至少选择一名学生去打工！');
+            return;
+        }
+
+        closeModal();
+        executePartTimeJobWithSelection(selectedStudents);
+    };
+
+    // 更新切换按钮状态
+    function updateToggleButtonState() {
+        const toggleBtn = document.getElementById('toggle-select-btn');
+        const allChecked = Array.from(document.querySelectorAll('.student-checkbox')).every(cb => cb.checked);
+        const noneChecked = Array.from(document.querySelectorAll('.student-checkbox')).every(cb => !cb.checked);
+
+        if (allChecked) {
+            toggleBtn.textContent = '取消全选';
+        } else if (noneChecked) {
+            toggleBtn.textContent = '全选';
+        } else {
+            // 部分选中状态，保持当前文本
+            // 可以根据需要调整，比如显示"全选"或"取消全选"
+            toggleBtn.textContent = '取消全选';
+        }
+    }
+}
+
+/**
+ * 更新打工预览信息
+ */
+function updatePartTimeJobPreview() {
+    const checkboxes = document.querySelectorAll('.student-checkbox');
+    const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const totalCount = checkboxes.length;
+
+    let totalEarnings = 0;
+    checkboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            const studentName = checkbox.dataset.name;
+            const student = game.students.find(s => s.name === studentName);
+            if (student) {
+                const thinking = Number(student.thinking || 0);
+                const coding = Number(student.coding || 0);
+                const mental = Number(student.mental || 50);
+                totalEarnings += calculateStudentEarnings(thinking, coding, mental);
+            }
+        }
+    });
+
+    document.getElementById('selected-count').textContent = selectedCount;
+    document.getElementById('total-earnings-preview').textContent = `¥${totalEarnings}`;
+}
+/**
+ * 全选学生
+ */
+function selectAllStudents() {
+    document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    document.querySelectorAll('.student-card').forEach(card => {
+        card.style.opacity = '1.0';
+    });
+    updatePartTimeJobPreview();
+}
+
+/**
+ * 取消全选学生
+ */
+function deselectAllStudents() {
+    document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.querySelectorAll('.student-card').forEach(card => {
+        card.style.opacity = '0.45';
+    });
+    updatePartTimeJobPreview();
+}
+
+function calculateStudentEarnings(thinking, coding, mental) {
+    const baseEarnings = DAGONGJICHUSHOUYI; // 基础收益
+    const abilityMultiplier = DAGONGNENGLIXISHU; // 能力系数
+    const mentalBonus = mental > 70 ? 200 : mental > 50 ? 100 : 0; // 心理素质奖励
+
+    const earnings = baseEarnings + (thinking + coding) * abilityMultiplier + mentalBonus;
+    return Math.floor(earnings);
+}
+
+/**
+ * 执行打工（带学生选择）
+ */
+function executePartTimeJobWithSelection(selectedStudentNames) {
+    window.log(`开始打工：${selectedStudentNames.join('、')} 通过兼职获得资金`);
+
+    const weatherFactor = window.game.getWeatherFactor();
+    const comfort = window.game.getComfort();
+    const comfortFactor = 1.0 + Math.max(0.0, (50 - comfort) / 100.0);
+    let totalEarnings = 0;
+    const quitList = [];
+
+    selectedStudentNames.forEach(studentName => {
+        const s = game.students.find(student => student.name === studentName && student.active);
+        if (!s) return;
+
+        // 计算打工压力（基于能力，能力越低压力越大）
+        const studentAbility = (s.thinking + s.coding) / 2.0;
+        let basePressure = 20;
+        const abilityPressure = Math.max(0, (50 - studentAbility) * 0.1);
+        basePressure += abilityPressure;
+
+        // 应用环境和设施修正
+        const canteenReduction = window.game.facilities.getCanteenPressureReduction();
+        let pressureIncrease = basePressure * weatherFactor * canteenReduction * comfortFactor;
+
+        // 处理天赋对压力的影响
+        try {
+            if (typeof s.triggerTalents === 'function') {
+                const talentResults = s.triggerTalents('pressure_change', {
+                    source: 'part_time_job',
+                    amount: pressureIncrease
+                }) || [];
+                for (const r of talentResults) {
+                    if (r?.result?.action === 'halve_pressure') {
+                        pressureIncrease *= 0.5;
+                    } else if (r?.result?.action === 'moyu_cancel_pressure') {
+                        pressureIncrease = 0;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error('天赋处理打工压力失败:', e);
+        }
+
+        // 更新学生压力
+        s.pressure = (s.pressure || 0) + pressureIncrease;
+        window.log(`  ${s.name} 压力+${pressureIncrease.toFixed(1)}（当前: ${s.pressure.toFixed(1)}）`);
+
+        // 计算该学生带来的收入（基于思维、代码和心理素质）
+        const thinking = Number(s.thinking || 0);
+        const coding = Number(s.coding || 0);
+        const mental = Number(s.mental || 50);
+        const studentEarnings = calculateStudentEarnings(thinking, coding, mental);
+        totalEarnings += studentEarnings;
+
+        // 检查压力是否超过100
+        if (s.pressure > 100) {
+            quitList.push(s.name);
+            const index = game.students.indexOf(s);
+            if (index > -1) {
+                game.students.splice(index, 1);
+            }
+            game.quit_students = (game.quit_students || 0) + 1;
+            game.reputation = Math.max(0, game.reputation - 5);
+        }
+    });
+
+    // 增加总资金
+    game.budget = (game.budget || 0) + totalEarnings;
+    window.log(`打工结束：获得资金 ¥${totalEarnings}，当前预算：¥${game.budget}`);
+
+    // 处理退队日志
+    if (quitList.length > 0) {
+        const msg = `${quitList.join('、')} 因打工后压力超过100退队！声誉-5`;
+        window.log(`[打工退队] ${msg}`);
+        window.pushEvent && window.pushEvent({
+            name: '打工退队',
+            description: msg,
+            week: game.week
+        });
+    }
+
+    // 检查是否所有学生退队
+    if (game.students.length === 0) {
+        window.log(`所有学生因打工压力过大退队`);
+        window.checkAllQuitAndTriggerBadEnding && window.checkAllQuitAndTriggerBadEnding();
+    }
+
+    safeWeeklyUpdate(1);
+    renderAll();
+}
+
+// 暴露函数到全局作用域
+window.showPartTimeJobUI = showPartTimeJobUI;
+window.selectAllStudents = selectAllStudents;
+window.deselectAllStudents = deselectAllStudents;
 window.addEventListener('load', initExtraTrainButton);

@@ -145,13 +145,14 @@
   <div class="col panel side-panel" style="flex: 0 0 360px;">
   <h3 style="margin-top:0">本周行动（每个行动持续1周）</h3>
   <div class="action-cards">
+      <!-- 前六个按钮保持不变 -->
       <div class="action-card" id="action-train" role="button" tabindex="0">
           <div class="card-title">训练</div>
           <div class="card-desc">安排学生进行专项训练，提高实力</div>
       </div>
       <div class="action-card" id="action-extra-train" role="button" tabindex="0">
           <div class="card-title">加训</div>
-          <div class="card-desc">无行动值消耗，提升训练效果但压力+50%</div>
+          <div class="card-desc">无行动值消耗，提升随机训练效果但压力+50%</div>
       </div>
       <div class="action-card" id="action-entertain" role="button" tabindex="0">
           <div class="card-title">娱乐</div>
@@ -165,7 +166,13 @@
           <div class="card-title">集训</div>
           <div class="card-desc">参加合适的外出集训，集中提升训练效率</div>
       </div>
+      <!-- 打工按钮 -->
+      <div class="action-card" id="action-part-time" role="button" tabindex="0" onclick="showPartTimeJobUI()">
+          <div class="card-title">打工</div>
+          <div class="card-desc">压榨学生给你赚钱</div>
+      </div>
 
+      <!-- 将最后两个按钮移入容器内 -->
       <div class="action-card" id="action-overseas" role="button" tabindex="0" onclick="overseasTrainingUI()">
           <div class="card-title">出境集训</div>
           <div class="card-desc">参加国际集训，可激发隐藏天赋</div>
@@ -174,6 +181,7 @@
           <div class="card-title">辞职</div>
           <div class="card-desc">立即结束本赛季并进行结算</div>
       </div>
+  </div>
 
       <!-- 动态突发事件容器：JS 会在此处渲染任意数量的事件卡，支持iOS风格的滚动折叠 -->
       <div id="event-cards-container"></div>
