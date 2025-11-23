@@ -87,11 +87,11 @@
           一觉醒来，你发现你坐在机房前，成为了你们学校信息学竞赛的总教练。<br><br>
           回想起之前构造题没checker，模拟赛没大样例，一个月没有半天假期的训练生活。<br><br>
           你决定要改变这一切。<br><br>
-          <strong>原作者：seve 魔改：HoLuc1078</strong>
+          <strong>原作者：seve 魔改：YXL39</strong>
           </h3>
           <p></p>
           <div class="mask-actions">
-              <button id="oiMaskSkipBtn" class="btn btn-skip">进入游戏</button>
+              <button id="oiMaskSkipBtn" class="btn btn-skip">进入</button>
           </div>
       </div>
   </div>
@@ -117,7 +117,7 @@
       </div>
 
       <div style="flex:1;min-width:280px;">
-        <label class="block">游戏模式</label>
+        <label class="block">模式</label>
         <div id="start-mode-grid" class="mode-grid" style="display:flex;gap:10px;margin-top:8px;">
           <div class="option-card mode-card selected" data-val="simplified" style="flex:1;cursor:pointer;padding:10px 12px;border:1px solid #e6e6e6;border-radius:8px;text-align:center;">
             <div style="font-weight:600;margin-bottom:6px">简化模式</div>
@@ -161,7 +161,7 @@
     <div class="modal-actions" style="margin-top:12px">
       <button class="btn btn-ghost" id="start-help">查看详细帮助</button>
       <button class="btn" id="daily-challenge-btn" style="background:#667eea;color:white;">📅 今日挑战</button>
-      <button class="btn" id="start-button">开始游戏 🚀</button>
+      <button class="btn" id="start-button">开始 🚀</button>
     </div>
   </div>
 </div>
@@ -238,7 +238,7 @@
     function renderDiffGrid(){
       const defs = [
         {v:1,label:'简单',desc:'适合初次体验的人'},
-        {v:2,label:'普通',desc:'标准游戏体验'},
+        {v:2,label:'普通',desc:'标准体验'},
         {v:3,label:'专家',desc:'适合寻求挑战的人'}
       ];
       const grid = document.getElementById('start-diff-grid');
@@ -362,7 +362,7 @@
             ? PROVINCES[params.provinceId].name 
             : '未知省份';
           
-          if(confirm(`📅 今日挑战（${params.displayDate}）\n\n省份：${provinceName}\n难度：普通\n种子：${params.seed}\n\n所有玩家今天都将使用相同的初始条件！\n\n确认开始今日挑战？`)){
+          if(confirm(`📅 今日挑战（${params.displayDate}）\n\n省份：${provinceName}\n难度：普通\n种子：${params.seed}\n\n所有人今天都将使用相同的初始条件！\n\n确认开始今日挑战？`)){
             // 设置今日挑战标记
             try {
               sessionStorage.setItem('oi_game_active_session', 'true');
@@ -501,7 +501,7 @@
     })();
   </script>
   <div class="disclaimer" role="note" aria-label="免责声明" style="margin-top:8px;margin-bottom:18px;font-size:13px;color:#444;">
-    免责声明：本游戏为虚构的教学与娱乐模拟游戏。游戏中所展示的训练方式、成绩、资源分配、时间安排均为玩法设定。所有人名均为随机生成，所有训练用题库均为AI生成，和现实中对应年份比赛题目完全不相关。省份强弱和各国选手水平均为虚构和游戏设定，台湾省、香港特别行政区和澳门特别行政区均为中国不可分割的一部分，IOI成员国/地区为截止2025年10月官网标准。
+    免责声明：本为虚构的教学与娱乐模拟。其中所展示的训练方式、成绩、资源分配、时间安排均为设定。所有人名均为随机生成，所有训练用题库均为AI生成，和现实中对应年份比赛题目完全不相关。省份强弱和各国选手水平均为虚构和设定，台湾省、香港特别行政区和澳门特别行政区均为中国不可分割的一部分，IOI成员国/地区为截止2025年10月官网标准。
   </div>
 </body>
 </html>
